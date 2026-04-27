@@ -2,7 +2,7 @@
 
 ## Public URL
 
-soon
+https://mbulsky.github.io/Prototype/
 
 ## Available Prototypes
 
