@@ -1,0 +1,4136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Privy Mobile — Force Invitation Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #E42E2C;
+  --red-dark: #C22725;
+  --red-bg: #FCEAE9;
+  --blue: #0066CC;
+  --blue-link: #1877D1;
+  --blue-badge: #0A77E5;
+  --bg: #FFFFFF;
+  --bg2: #F4F5F7;
+  --bg3: #F8F9FA;
+  --bg-lock: #E8EEF2;
+  --text: #1F2329;
+  --text2: #5B6778;
+  --text3: #8A94A2;
+  --text4: #A0ABB9;
+  --border: #E6E7EB;
+  --border2: #D9DDE3;
+  --border3: #EEF0F3;
+  --green-bg: #EAF9EE;
+  --green: #248C3E;
+  --green-dot: #2AB74B;
+  --green-border: #BEEDCA;
+  --bg-danger: #FCEAE9;
+  --fg-danger: #9F201F;
+  --border-danger: #F6BCBB;
+  --bg-info: #E5F3FF;
+  --fg-info: #0061B3;
+  --border-info: #ADD9FF;
+  --bg-warning: #FFF5E5;
+  --fg-warning: #B36F00;
+  --purple: #4A1D5E;
+  --purple-grad: linear-gradient(135deg, #6E1B42 0%, #2B0817 100%);
+  --r4: 4px; --r6: 6px; --r8: 8px; --r10: 10px; --r12: 12px; --r14: 14px; --r16: 16px; --r20: 20px; --r-full: 9999px;
+  --shadow-sm: 0 1px 3px rgba(25,28,33,0.06);
+  --shadow-md: 0 4px 16px rgba(25,28,33,0.10), 0 1px 4px rgba(25,28,33,0.05);
+  --shadow-lg: 0 8px 32px rgba(25,28,33,0.14), 0 2px 8px rgba(25,28,33,0.06);
+  --font: 'DM Sans', sans-serif;
+  --t: 0.2s ease;
+}
+html, body {
+  font-family: var(--font);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  background: #D8D8D8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════
+   PHONE FRAME WRAPPER
+══════════════════════════════════════ */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  margin: 20px auto;
+  background: white;
+  border-radius: 48px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 8px 20px rgba(0,0,0,0.15);
+  border: 10px solid #1a1a1a;
+}
+@media (max-width: 420px) {
+  .phone-frame {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+  body { background: white; }
+}
+
+/* iOS status bar */
+.status-bar {
+  height: 48px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24px 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+}
+.status-bar.white { color: white; }
+.status-bar-time { font-feature-settings: 'tnum'; }
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-bar-right svg { width: 17px; height: 11px; }
+.battery-box {
+  width: 26px; height: 13px;
+  border: 1.2px solid currentColor;
+  border-radius: 3px;
+  position: relative;
+  opacity: 0.95;
+}
+.battery-box::after {
+  content: '';
+  position: absolute;
+  right: -3px; top: 50%;
+  transform: translateY(-50%);
+  width: 2px; height: 5px;
+  background: currentColor;
+  border-radius: 0 1px 1px 0;
+  opacity: 0.5;
+}
+.battery-fill {
+  position: absolute;
+  top: 1px; left: 1px; bottom: 1px;
+  width: 80%;
+  background: currentColor;
+  border-radius: 1.5px;
+}
+
+/* Dynamic island */
+.dynamic-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 124px;
+  height: 37px;
+  background: #000;
+  border-radius: 100px;
+  z-index: 25;
+}
+
+/* Home indicator */
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: var(--text);
+  border-radius: 100px;
+  z-index: 30;
+}
+.home-indicator.white { background: rgba(0,0,0,0.6); }
+
+/* ══════════════════════════════════════
+   SCREEN: LOCK SCREEN WITH NOTIFICATION
+══════════════════════════════════════ */
+#screen-lock {
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='390' height='844' viewBox='0 0 390 844' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='80%25'%3E%3Cstop offset='0%25' stop-color='%23404a3e'/%3E%3Cstop offset='100%25' stop-color='%231a221a'/%3E%3C/radialGradient%3E%3ClinearGradient id='leaf' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23365a2a'/%3E%3Cstop offset='100%25' stop-color='%231e3a15'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='390' height='844' fill='url(%23g)'/%3E%3C!-- cat body area --%3E%3Cellipse cx='195' cy='500' rx='180' ry='200' fill='%23b8b4ad' opacity='0.85'/%3E%3Cellipse cx='195' cy='600' rx='120' ry='100' fill='%23d4d0c8' opacity='0.6'/%3E%3C!-- leaves --%3E%3Cpath d='M-30 100 Q80 80 170 120 Q220 150 260 120 Q310 90 380 110 L390 0 L0 0 Z' fill='url(%23leaf)' opacity='0.9'/%3E%3Cpath d='M-20 680 Q100 670 200 700 Q300 730 410 710 L410 844 L-20 844 Z' fill='url(%23leaf)' opacity='0.85'/%3E%3Cpath d='M20 350 Q80 320 150 340 Q180 345 150 380 Q100 395 60 380 Z' fill='url(%23leaf)'/%3E%3Cpath d='M270 400 Q330 380 380 420 Q390 450 350 470 Q290 460 270 430 Z' fill='url(%23leaf)'/%3E%3Cpath d='M40 550 Q100 540 130 580 Q120 620 70 610 Z' fill='url(%23leaf)'/%3E%3Cpath d='M270 580 Q340 560 370 600 Q360 640 300 620 Z' fill='url(%23leaf)'/%3E%3C/svg%3E") center/cover;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.lock-status {
+  padding: 0 24px;
+  height: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+}
+.lock-status-left { font-size: 17px; font-weight: 400; letter-spacing: 0.5px; }
+
+.lock-clock {
+  text-align: center;
+  margin-top: 24px;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.lock-date {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  margin-bottom: 6px;
+  opacity: 0.98;
+}
+.lock-time {
+  font-size: 88px;
+  font-weight: 200;
+  letter-spacing: -3px;
+  line-height: 1;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.25);
+  font-feature-settings: 'tnum';
+}
+
+.lock-widgets {
+  display: flex;
+  gap: 10px;
+  margin: 24px 24px 0;
+  justify-content: center;
+}
+.lock-widget {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 10px 14px;
+  min-width: 140px;
+  color: white;
+}
+.lock-widget-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+.lock-widget-top svg { width: 14px; height: 14px; }
+.lock-widget-val {
+  font-size: 22px;
+  font-weight: 400;
+}
+.lock-widget-sub {
+  font-size: 11px;
+  opacity: 0.7;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+/* Notification */
+.lock-notif-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 12px 80px;
+}
+.lock-notif {
+  background: rgba(245, 245, 247, 0.55);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text);
+  animation: notifSlide 0.5s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+@keyframes notifSlide { from {opacity:0; transform: translateY(20px)} to {opacity:1; transform:translateY(0)} }
+.lock-notif:active { opacity: 0.7; }
+.lock-notif-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.lock-notif-icon img { width: 28px; height: 28px; object-fit: contain; }
+.lock-notif-content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+.lock-notif-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.lock-notif-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.25;
+  letter-spacing: -0.1px;
+}
+.lock-notif-time {
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+.lock-notif-body {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.3;
+  margin-top: 3px;
+  letter-spacing: -0.1px;
+}
+
+/* Flashlight & camera buttons */
+.lock-bottom-buttons {
+  position: absolute;
+  bottom: 34px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 44px;
+  pointer-events: none;
+}
+.lock-bottom-btn {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: white;
+  pointer-events: auto;
+}
+.lock-bottom-btn svg { width: 22px; height: 22px; }
+
+.lock-tap-hint {
+  position: absolute;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(228, 46, 44, 0.95);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+  animation: tapPulse 1.5s ease infinite;
+  white-space: nowrap;
+}
+@keyframes tapPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.05); }
+}
+
+/* ══════════════════════════════════════
+   SCREEN: LOGIN
+══════════════════════════════════════ */
+#screen-login { display: none; position: absolute; inset: 0; background: white; flex-direction: column; }
+
+.login-topbar {
+  padding: 12px 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.login-back {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+}
+.login-back svg { width: 18px; height: 18px; }
+.login-help {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text);
+  cursor: pointer;
+}
+.login-help svg { width: 26px; height: 26px; }
+
+.login-body {
+  flex: 1;
+  padding: 60px 20px 0;
+  overflow-y: auto;
+}
+.login-heading {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.login-sub {
+  font-size: 16px;
+  color: var(--text3);
+  margin-bottom: 32px;
+}
+.login-privy-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg2);
+  border-radius: var(--r12);
+  padding: 12px 16px 12px 12px;
+  margin-bottom: 28px;
+}
+.login-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B7BAA, #5C4A7A);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  overflow: hidden;
+}
+.login-id-info { flex: 1; min-width: 0; }
+.login-id-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.login-id-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+.login-verified {
+  width: 18px; height: 18px;
+  background: var(--green-dot);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.login-verified svg { width: 10px; height: 10px; color: white; }
+.login-id-masked {
+  font-size: 14px;
+  color: var(--text3);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+.login-change-btn {
+  background: none;
+  border: none;
+  color: var(--blue-link);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.login-submit {
+  width: 100%;
+  height: 56px;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: var(--r12);
+  font-family: var(--font);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t);
+  letter-spacing: 0.2px;
+}
+.login-submit:hover, .login-submit:active { background: var(--red-dark); }
+
+.login-register-row {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--text2);
+}
+.login-register-row a { color: var(--blue-link); font-weight: 600; text-decoration: none; }
+
+.login-region {
+  text-align: center;
+  padding-bottom: 24px;
+  font-size: 16px;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+.login-region strong {
+  color: var(--text);
+  font-weight: 600;
+  margin: 0 8px;
+}
+.login-region svg { width: 14px; height: 14px; display: inline-block; vertical-align: middle; color: var(--text); }
+
+/* ══════════════════════════════════════
+   SCREEN: HOME (Personal view by default for reject flow)
+══════════════════════════════════════ */
+#screen-home { display: none; position: absolute; inset: 0; background: #F0F3F7; flex-direction: column; }
+
+/* Home header */
+.home-header {
+  background: #F0F3F7;
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+}
+.home-greet {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.home-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #c8cdd8;
+  display: flex; align-items: flex-end; justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #e8eaf0;
+}
+.home-avatar svg { width: 36px; height: 36px; color: #7a8496; margin-bottom: -4px; }
+.home-greet-text { flex: 1; min-width: 0; }
+.home-greet-hello {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+}
+.home-greet-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.home-help-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2);
+  cursor: pointer;
+  flex-shrink: 0;
+  background: white;
+}
+.home-help-btn svg { width: 20px; height: 20px; }
+
+/* Plan card */
+.plan-card {
+  background: var(--purple-grad);
+  border-radius: var(--r16);
+  overflow: hidden;
+  color: white;
+  margin-bottom: 18px;
+}
+.plan-card.enterprise {
+  background: linear-gradient(135deg, #641818 0%, #2A0808 100%);
+}
+.plan-top {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.plan-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+.plan-id-icon {
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plan-id-icon svg { width: 16px; height: 16px; color: white; }
+.plan-id-chev { opacity: 0.9; }
+.plan-id-chev svg { width: 16px; height: 16px; }
+.plan-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.95);
+  color: var(--blue-link);
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.plan-pill svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.plan-body {
+  padding: 0 16px 16px;
+}
+.plan-stats {
+  display: flex;
+  background: white;
+  border-radius: var(--r12);
+  overflow: hidden;
+}
+.plan-stat {
+  flex: 1;
+  padding: 12px 14px;
+  position: relative;
+}
+.plan-stat + .plan-stat { border-left: 1px solid var(--border); }
+.plan-stat-label {
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+.plan-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.plan-stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--blue-link);
+  letter-spacing: -0.3px;
+}
+.plan-stat-chev svg, .plan-stat-plus svg {
+  width: 18px; height: 18px;
+  color: var(--text3);
+}
+
+.plan-info-row {
+  background: #E8F1FB;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 0 0 var(--r12) var(--r12);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: -6px;
+  position: relative;
+  z-index: 1;
+}
+.plan-info-icon {
+  width: 16px; height: 16px;
+  background: var(--blue-link);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* Action icons row */
+.home-actions {
+  background: white;
+  border-radius: var(--r16);
+  padding: 14px 12px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-around;
+}
+.home-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex: 1;
+}
+.home-action-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.home-action-icon.orange { background: #FFEFE8; color: #FF7A45; }
+.home-action-icon.blue { background: #E8F1FB; color: #0077E6; }
+.home-action-icon.purple { background: #F0E8F8; color: #7B3FC4; }
+.home-action-icon.gold { background: #FFF6E0; color: #E8A93B; }
+.home-action-icon svg { width: 22px; height: 22px; }
+.home-action-label {
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+/* Content area */
+.home-content {
+  flex: 1;
+  padding: 0 16px;
+  overflow-y: auto;
+}
+
+/* Banner promo */
+.home-banner {
+  background: white;
+  border-radius: var(--r16);
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+}
+.home-banner-logos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px 6px;
+}
+.banner-logo-bl {
+  font-size: 11px; font-weight: 700;
+  color: #1565C0; letter-spacing: -0.2px;
+}
+.banner-heart { color: var(--red); font-size: 13px; }
+.banner-logo-privy {
+  font-size: 11px; font-weight: 700;
+  color: var(--red); letter-spacing: -0.3px;
+}
+.home-banner-dark {
+  background: linear-gradient(135deg, #0A1628 0%, #1A2E5A 100%);
+  margin: 0 10px 10px;
+  border-radius: var(--r12);
+  padding: 12px 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.home-banner-dark::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(228,46,44,0.25);
+}
+.home-banner-text-col { flex: 1; min-width: 0; z-index: 1; }
+.home-banner-head {
+  font-size: 13px; font-weight: 700;
+  color: white; line-height: 1.2; margin-bottom: 3px;
+}
+.home-banner-red-box {
+  display: inline-block;
+  background: var(--red);
+  color: white;
+  font-size: 14px; font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+.home-banner-desc {
+  font-size: 10px;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.home-banner-pill {
+  display: inline-block;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.home-banner-note {
+  font-size: 9px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
+}
+.home-banner-robot {
+  width: 90px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1;
+}
+.home-banner-robot svg { width: 90px; height: 90px; }
+.home-banner-dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 0 10px;
+}
+.home-banner-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--border3);
+}
+.home-banner-dot.on { background: var(--blue-link); width: 18px; border-radius: 3px; }
+
+/* Pending tasks */
+.pending-section { margin-bottom: 20px; }
+.pending-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.pending-count {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--blue-link);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.pending-title-group { flex: 1; }
+.pending-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.pending-meta {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.pending-filter {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 14px;
+  padding-bottom: 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.pending-filter::-webkit-scrollbar { display: none; }
+.pending-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pending-chip.active { border-color: var(--blue-link); color: var(--text); }
+.pending-chip-badge {
+  background: var(--blue-badge);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 2px 7px;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Pending task item */
+.pending-task {
+  background: white;
+  border-radius: var(--r14);
+  padding: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+}
+.pending-task-av {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: #D9DDE3;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+.pending-task-info { flex: 1; min-width: 0; }
+.pending-task-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.pending-task-author {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+}
+.pending-task-date {
+  font-size: 12px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.pending-task-title {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.4;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pending-task-tags { display: flex; gap: 6px; }
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--bg2);
+  border-radius: var(--r4);
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+.tag-pill::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--text3);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tag-pill.approval::before { background: #E8A93B; }
+.tag-pill.form::before { background: var(--blue-link); }
+
+.docs-require-pill {
+  position: sticky;
+  bottom: 80px;
+  margin: 10px auto 0;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.docs-require-pill svg { width: 12px; height: 12px; }
+
+/* Bottom nav */
+.bottom-nav {
+  background: white;
+  border-top: 1px solid var(--border);
+  height: 72px;
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 20px 0;
+  position: relative;
+  flex-shrink: 0;
+}
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--text3);
+  position: relative;
+}
+.bn-item.active { color: var(--red); }
+.bn-item svg { width: 22px; height: 22px; }
+.bn-item.scan {
+  width: 56px; height: 56px;
+  background: var(--red);
+  color: white;
+  border-radius: 50%;
+  flex: 0 0 56px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: -18px 4px 0;
+  box-shadow: 0 6px 16px rgba(228,46,44,0.35);
+}
+.bn-item.scan svg { width: 26px; height: 26px; }
+.bn-badge {
+  position: absolute;
+  top: -4px;
+  right: 50%;
+  transform: translateX(16px);
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 10px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+/* ══════════════════════════════════════
+   ACTIONS REQUIRED PAGE
+══════════════════════════════════════ */
+#screen-actions { display: none; position: absolute; inset: 0; background: white; flex-direction: column; }
+
+.actions-topbar {
+  padding: 8px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border-bottom: 1px solid var(--border3);
+  flex-shrink: 0;
+}
+.actions-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg2);
+  border-radius: var(--r-full);
+  padding: 4px 10px 4px 4px;
+  cursor: pointer;
+  border: none;
+  color: var(--text);
+}
+.actions-account-av {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B7BAA, #5C4A7A);
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+.actions-account-av.enterprise {
+  background: #E42E2C;
+}
+.actions-account-av.enterprise svg {
+  width: 18px; height: 18px; color: white;
+}
+.actions-account-btn svg.chev { width: 16px; height: 16px; color: var(--text); }
+.actions-title {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.actions-add-btn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text);
+  cursor: pointer;
+}
+.actions-add-btn svg { width: 26px; height: 26px; }
+
+/* Search */
+.actions-search-wrap {
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+.actions-search {
+  width: 100%;
+  height: 44px;
+  background: var(--bg2);
+  border: none;
+  border-radius: var(--r12);
+  padding: 0 16px 0 44px;
+  font-family: var(--font);
+  font-size: 15px;
+  outline: none;
+  color: var(--text);
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A94A2' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 16px center;
+}
+.actions-search::placeholder { color: var(--text3); }
+
+/* Filter chips */
+.actions-filters {
+  padding: 0 16px 12px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.actions-filters::-webkit-scrollbar { display: none; }
+.actions-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 14px;
+  background: white;
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r-full);
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.actions-filter-chip svg { width: 14px; height: 14px; color: var(--text3); }
+.actions-filter-chip-badge {
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 2px 6px;
+  margin-left: 2px;
+}
+.actions-filters-divider {
+  width: 1px;
+  background: var(--border2);
+  margin: 4px 0;
+  align-self: stretch;
+}
+
+/* Document list */
+.actions-list {
+  flex: 1;
+  overflow-y: auto;
+  background: white;
+}
+.actions-section-header {
+  background: var(--bg2);
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 500;
+}
+.action-item {
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--border3);
+  cursor: pointer;
+  transition: background var(--t);
+}
+.action-item:active { background: var(--bg2); }
+.action-item-av {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: #D9DDE3;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+.action-item-av svg { width: 28px; height: 28px; }
+.action-item-info { flex: 1; min-width: 0; }
+.action-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.action-item-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.1px;
+  min-width: 0;
+}
+.action-item-author-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.action-item-verified {
+  width: 18px; height: 18px;
+  background: var(--green-dot);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.action-item-verified svg { width: 10px; height: 10px; color: white; }
+.action-item-date {
+  font-size: 13px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.action-item-title {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.action-item-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.action-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text2);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r4);
+  padding: 3px 8px;
+  font-weight: 500;
+}
+.action-tag::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--text3);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.action-tag.approval::before { background: #E8A93B; }
+.action-tag.form::before { background: var(--blue-link); }
+
+/* ══════════════════════════════════════
+   ACCOUNT DRAWER
+══════════════════════════════════════ */
+.drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 40;
+  display: none;
+  animation: fadeIn 0.2s;
+}
+.drawer-backdrop.show { display: block; }
+@keyframes fadeIn { from {opacity:0} to {opacity:1} }
+@keyframes slideInLeft { from {transform: translateX(-100%)} to {transform: translateX(0)} }
+
+.drawer {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 320px;
+  background: white;
+  z-index: 50;
+  display: none;
+  flex-direction: column;
+  padding: 70px 16px 20px;
+  animation: slideInLeft 0.3s ease;
+  overflow-y: auto;
+}
+.drawer.show { display: flex; }
+
+.drawer-plan-card {
+  background: white;
+  border: 1px solid var(--border2);
+  border-radius: var(--r12);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  cursor: pointer;
+}
+.drawer-plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.drawer-plan-label {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 2px;
+}
+.drawer-plan-active {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blue-link);
+  letter-spacing: -0.3px;
+}
+.drawer-plan-chev { color: var(--text3); }
+.drawer-plan-chev svg { width: 22px; height: 22px; }
+.drawer-plan-sub {
+  background: #E8F1FB;
+  border-radius: var(--r8);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--blue-link);
+  margin-top: 12px;
+  margin-left: -16px;
+  margin-right: -16px;
+  margin-bottom: -14px;
+  border-radius: 0 0 var(--r12) var(--r12);
+}
+
+.drawer-account-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border2);
+  border-radius: var(--r12);
+  margin: 12px 0 24px;
+  cursor: pointer;
+}
+.drawer-account-av {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B7BAA, #5C4A7A);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  overflow: hidden;
+}
+.drawer-account-av.enterprise {
+  background: var(--red);
+}
+.drawer-account-av.enterprise svg {
+  width: 22px; height: 22px; color: white;
+}
+.drawer-account-name {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+.drawer-account-caret {
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.drawer-account-caret svg { width: 16px; height: 16px; }
+
+.drawer-nav {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  flex: 1;
+}
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 8px;
+  font-size: 17px;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: var(--r8);
+  letter-spacing: -0.1px;
+  font-weight: 400;
+}
+.drawer-nav-item:active { background: var(--bg2); }
+.drawer-nav-item.active {
+  background: var(--bg2);
+  font-weight: 600;
+}
+.drawer-nav-item svg {
+  width: 22px; height: 22px;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+.drawer-nav-item.active svg { color: var(--text); }
+.drawer-nav-item .drawer-nav-badge {
+  margin-left: auto;
+  background: var(--blue-badge);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 36px;
+  height: 26px;
+  border-radius: 20px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.drawer-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+/* ══════════════════════════════════════
+   BOTTOM SHEET MODAL
+══════════════════════════════════════ */
+.bottom-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: none;
+  animation: fadeIn 0.2s;
+}
+.bottom-sheet-backdrop.show { display: block; }
+
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.bottom-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  max-height: 90%;
+  z-index: 201;
+  display: none;
+  flex-direction: column;
+  animation: sheetUp 0.3s ease;
+  overflow: hidden;
+}
+.bottom-sheet.show { display: flex; }
+.bottom-sheet-handle {
+  margin: 8px auto 6px;
+  width: 40px; height: 5px;
+  background: #D1D5DB;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.sheet-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.sheet-close:active { background: var(--bg2); color: var(--text); }
+.sheet-close svg { width: 18px; height: 18px; }
+.bottom-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 0;
+}
+.bottom-sheet-footer {
+  padding: 12px 20px 24px;
+  background: white;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border3);
+}
+
+/* Invitation sheet */
+.invite-icon-wrap {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--bg-info);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px auto 20px;
+}
+.invite-icon-wrap svg {
+  width: 36px; height: 36px;
+  color: var(--fg-info);
+}
+.invite-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+}
+.invite-ent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-info);
+  color: var(--fg-info);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-info);
+  margin: 0 auto 14px;
+  text-align: center;
+}
+.invite-center { text-align: center; }
+.invite-desc {
+  font-size: 15px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+.invite-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.invite-feature-pill {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  background: var(--bg2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.flow-note {
+  margin: 12px 8px 2px;
+  padding: 10px 12px;
+  border-radius: var(--r10);
+  background: var(--bg-info);
+  color: var(--fg-info);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.btn-row-sheet {
+  display: flex;
+  gap: 10px;
+}
+.btn-sheet {
+  flex: 1;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: var(--r12);
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border2);
+  background: white;
+  color: var(--text);
+  transition: background var(--t);
+  letter-spacing: 0.1px;
+}
+.btn-sheet:active { background: var(--bg2); }
+.btn-sheet.primary {
+  background: var(--red);
+  color: white;
+  border-color: var(--red);
+}
+.btn-sheet.primary:active { background: var(--red-dark); }
+.btn-sheet.danger-outline {
+  background: var(--bg-danger);
+  color: var(--fg-danger);
+  border-color: var(--border-danger);
+}
+.btn-sheet.danger-outline:active { background: #F6BCBB; }
+.btn-sheet.full { flex: unset; width: 100%; }
+.btn-sheet:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* TNC sheet */
+.tnc-sheet-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin: 16px 0 4px;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+  padding: 0 16px;
+}
+.tnc-sheet-date {
+  font-size: 15px;
+  color: var(--text2);
+  margin: 10px 0 16px;
+  padding: 0 4px;
+}
+.tnc-user-info {
+  background: var(--bg2);
+  border-radius: var(--r12);
+  padding: 4px 0;
+  margin-bottom: 16px;
+}
+.tnc-user-field {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.tnc-user-field:last-child { border-bottom: none; }
+.tnc-user-label {
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 3px;
+}
+.tnc-user-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.tnc-content-wrap {
+  position: relative;
+  margin: 0 -20px;
+}
+.tnc-text {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0 20px 16px;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.tnc-text p { margin-bottom: 10px; }
+.tnc-text ol { padding-left: 18px; }
+.tnc-text ol li { margin-bottom: 10px; }
+.tnc-text a { color: var(--blue-link); text-decoration: underline; }
+
+.tnc-scroll-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(25,28,33,0.88);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  white-space: nowrap;
+}
+.tnc-scroll-hint svg { width: 13px; height: 13px; }
+
+.tnc-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.tnc-checkbox-box {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border2);
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: all var(--t);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  background: white;
+}
+.tnc-checkbox.checked .tnc-checkbox-box {
+  background: var(--blue-link);
+  border-color: var(--blue-link);
+}
+.tnc-checkbox-box svg {
+  width: 14px; height: 14px;
+  color: white;
+  opacity: 0;
+  transition: opacity var(--t);
+}
+.tnc-checkbox.checked .tnc-checkbox-box svg { opacity: 1; }
+.tnc-checkbox-label {
+  font-size: 15px;
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Success sheet */
+.success-icon-wrap {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--green-bg);
+  display: flex; align-items: center; justify-content: center;
+  margin: 16px auto 20px;
+}
+.success-icon-wrap svg { width: 36px; height: 36px; color: var(--green); }
+.success-title {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--green);
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
+}
+.success-desc {
+  font-size: 15px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+
+.benefit-box {
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  border-radius: var(--r12);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.benefit-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+}
+.benefit-item {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--green);
+  line-height: 1.45;
+  margin-bottom: 10px;
+  align-items: flex-start;
+}
+.benefit-item:last-child { margin-bottom: 0; }
+.benefit-item svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+.benefit-item strong { font-weight: 700; }
+
+/* Warning sheet */
+.warning-icon-wrap {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--bg-warning);
+  display: flex; align-items: center; justify-content: center;
+  margin: 16px auto 20px;
+}
+.warning-icon-wrap svg { width: 36px; height: 36px; color: var(--fg-warning); }
+.warning-title {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
+}
+
+.neutral-icon-wrap {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 16px auto 20px;
+}
+.neutral-icon-wrap svg { width: 36px; height: 36px; color: var(--text2); }
+.impact-box {
+  margin: 16px 8px 0;
+  padding: 14px;
+  border: 1px solid #FFE0AD;
+  border-radius: var(--r12);
+  background: var(--bg-warning);
+  text-align: left;
+}
+.impact-title { font-size: 12px; font-weight: 700; color: var(--fg-warning); margin-bottom: 8px; }
+.impact-list { display: grid; gap: 8px; color: var(--text); font-size: 13px; line-height: 1.45; }
+.impact-list div { display: flex; gap: 8px; align-items: flex-start; }
+.impact-list span { color: var(--fg-warning); font-weight: 700; }
+
+/* Proto badge */
+.proto-badge {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  background: rgba(25,28,33,0.7);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* Demo controls */
+.demo-controls {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.demo-btn {
+  background: rgba(25,28,33,0.85);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.demo-btn:hover { background: rgba(25,28,33,1); }
+
+/* ══════════════════════════════════════
+   CONDITION SWITCHER (outside phone frame)
+══════════════════════════════════════ */
+.cond-switcher {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+  background: rgba(25,28,33,0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 8px;
+  border-radius: 100px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.cs-pill {
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.cs-pill.active { background: white; color: var(--text); }
+.cs-pill:hover:not(.active) { color: rgba(255,255,255,0.9); }
+
+/* ══════════════════════════════════════
+   SCREEN: EMAIL (Kondisi B)
+══════════════════════════════════════ */
+#screen-email {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #E8EAF0;
+  flex-direction: column;
+}
+.email-app-header {
+  background: white;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.email-app-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #EA4335 0%, #FBBC04 100%);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.email-app-icon svg { width: 16px; height: 16px; color: white; }
+.email-app-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.email-app-unread { font-size: 11px; color: var(--text3); }
+.email-scroll { flex: 1; overflow-y: auto; padding: 10px 10px 20px; }
+/* Email client chrome */
+.email-client-bar {
+  background: #3C3C3C;
+  border-radius: var(--r8) var(--r8) 0 0;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.email-dot { width: 10px; height: 10px; border-radius: 50%; }
+.email-dot.red { background: #FF5F57; }
+.email-dot.yellow { background: #FFBD2E; }
+.email-dot.green { background: #28CA41; }
+.email-subject-bar {
+  background: #2B2B2B;
+  padding: 6px 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.email-subject-label { font-size: 10px; color: #999; }
+.email-subject-val { font-size: 10px; color: #DDD; }
+.email-card {
+  background: white;
+  border-radius: 0 0 var(--r8) var(--r8);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 10px;
+}
+.email-header-stripe { height: 6px; background: var(--red); }
+.email-body { padding: 20px 18px; }
+.email-illustration {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, #E8F4FF, #D0E8FF);
+  border-radius: var(--r10);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px; position: relative;
+}
+.email-illustration .bldg-icon { font-size: 30px; line-height: 1; }
+.email-illustration .info-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 20px; height: 20px;
+  background: var(--blue); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid white;
+}
+.email-illustration .info-badge svg { width: 10px; height: 10px; }
+.email-greeting { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; letter-spacing: -0.1px; }
+.email-greeting-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+.email-block { margin-bottom: 12px; }
+.email-block-main { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.45; margin-bottom: 2px; letter-spacing: -0.1px; }
+.email-block-sub { font-size: 11px; color: var(--text3); line-height: 1.5; }
+.email-divider { height: 1px; background: var(--border); margin: 14px 0; }
+.email-cta-btn {
+  display: block; width: 100%;
+  padding: 12px;
+  background: var(--blue);
+  color: white; font-size: 13px; font-weight: 600;
+  text-align: center; border-radius: var(--r8);
+  border: none; cursor: pointer; font-family: var(--font);
+  margin-bottom: 6px;
+}
+.email-cta-btn:active { opacity: 0.85; }
+.email-cta-sub { text-align: center; font-size: 10px; color: var(--text3); margin-bottom: 14px; }
+.email-sign { margin-top: 16px; }
+.email-sign-line { font-size: 12px; color: var(--text3); margin-bottom: 1px; }
+.email-sign-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.email-sign-name2 { font-size: 11px; color: var(--text3); }
+.email-footer-card {
+  background: #1A2B4A;
+  padding: 16px 18px;
+}
+.email-footer-note { font-size: 10px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 4px; }
+.email-footer-note2 { font-size: 9px; color: rgba(255,255,255,0.38); line-height: 1.5; margin-bottom: 12px; }
+.email-footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.email-footer-addr { font-size: 10px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+.email-footer-addr strong { color: rgba(255,255,255,0.8); font-weight: 600; }
+.email-socials { display: flex; gap: 6px; }
+.social-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.social-icon svg { width: 13px; height: 13px; }
+.si-fb { background: #1877F2; } .si-x { background: #000; }
+.si-ig { background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+.si-web { background: var(--blue); }
+
+/* ══════════════════════════════════════
+   UPLOAD GATE NOTE (inside sheet-invitation)
+══════════════════════════════════════ */
+#invite-upload-note {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r8);
+  background: #FFF5E5;
+  border: 1px solid #FFE0AD;
+  color: #B36F00;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* ══════════════════════════════════════
+   DOC-ACCESS SHEET (Kondisi C, combined-style)
+══════════════════════════════════════ */
+.dam-icon-wrap-sheet {
+  width: 52px; height: 52px;
+  border-radius: var(--r12);
+  background: #FFF7ED; border: 1px solid #FED7AA;
+  display: flex; align-items: center; justify-content: center;
+  margin: 4px 0 14px;
+}
+.dam-icon-wrap-sheet svg { width: 26px; height: 26px; }
+.dam-title-sheet { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.dam-body-sheet { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+.ent-chip-box-sheet {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--border); border-radius: var(--r8);
+  padding: 10px 12px; background: var(--bg); margin-bottom: 10px;
+}
+.ent-chip-box-icon-s {
+  width: 32px; height: 32px; border-radius: var(--r8);
+  background: linear-gradient(135deg, #1565C0 40%, #E65100 100%);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ent-chip-box-icon-s svg { width: 16px; height: 16px; color: white; }
+.ent-chip-box-name-s { font-size: 13px; font-weight: 600; color: var(--text); }
+.ent-chip-box-sub-s { font-size: 11px; color: var(--text3); }
+.note-box-sheet {
+  background: #FFF7ED; border: 1px solid #FED7AA;
+  border-radius: var(--r8); padding: 10px 12px;
+  font-size: 12px; color: #92400E; line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 8px;
+  margin-bottom: 4px;
+}
+.note-box-sheet svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* ══════════════════════════════════════
+   DEEPLINK OVERLAY (Kondisi B)
+══════════════════════════════════════ */
+#deeplink-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: white;
+  z-index: 300;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.deeplink-logo {
+  width: 68px; height: 68px;
+  border-radius: 18px;
+  background: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(228,46,44,0.25);
+}
+.deeplink-logo svg { width: 38px; height: 38px; color: white; }
+.deeplink-text { font-size: 15px; font-weight: 600; color: var(--text); }
+.deeplink-bar-wrap {
+  width: 150px; height: 4px;
+  background: var(--bg2);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.deeplink-bar {
+  height: 100%; width: 0%;
+  background: var(--red);
+  border-radius: 100px;
+  transition: width 1.6s ease;
+}
+.deeplink-bar.go { width: 100%; }
+
+/* ══════════════════════════════════════
+   SCREEN: DOC VIEWER (Kondisi C)
+══════════════════════════════════════ */
+#screen-docviewer {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #f0f0f0;
+  flex-direction: column;
+}
+.docviewer-topbar {
+  background: white;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px 8px 4px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.docviewer-back-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #333;
+}
+.docviewer-back-btn svg { width: 20px; height: 20px; }
+.docviewer-title {
+  flex: 1; font-size: 13px; font-weight: 400;
+  color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-align: center;
+}
+.docviewer-page-nav {
+  display: flex; align-items: center; gap: 0; flex-shrink: 0;
+}
+.docviewer-nav-btn {
+  width: 32px; height: 32px;
+  background: transparent; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #999; border-radius: 6px;
+}
+.docviewer-nav-btn svg { width: 16px; height: 16px; }
+.docviewer-menu-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #333; flex-shrink: 0;
+}
+.docviewer-menu-btn svg { width: 20px; height: 20px; }
+.docviewer-page-area {
+  flex: 1; overflow-y: auto;
+  background: #f0f0f0;
+  padding: 0;
+  display: flex; flex-direction: column;
+}
+.docviewer-page {
+  background: white;
+  width: 100%;
+  flex: 1;
+  position: relative;
+  min-height: 480px;
+  padding: 20px 16px 80px;
+}
+.dv-doc-text {
+  font-size: 11px; color: #333; line-height: 1.5;
+}
+.dv-qr-wrap {
+  position: absolute;
+  bottom: 20px; right: 16px;
+  width: 64px; height: 64px;
+}
+.dv-qr-wrap svg { width: 64px; height: 64px; }
+/* Legacy selectors kept for compat */
+.dv-title-text { display: none; }
+.dv-line { display: none; }
+.dv-section-gap { display: none; }
+.dv-seal-area { display: none; }
+.dv-seal-circle { display: none; }
+.docviewer-page-num { display: none; }
+/* Bottom bar */
+.docviewer-bottom {
+  background: white;
+  border-top: 1px solid #e8e8e8;
+  padding: 6px 10px 18px;
+  flex-shrink: 0;
+}
+.dv-page-pill {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.dv-page-pill-inner {
+  display: inline-block;
+  background: #222;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-family: var(--font);
+}
+.dv-action-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.dv-icon-btn {
+  width: 46px; height: 46px;
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--r10);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #444;
+}
+.dv-icon-btn svg { width: 20px; height: 20px; }
+.docviewer-sign-btn {
+  flex: 1; padding: 13px;
+  background: var(--red); color: white;
+  font-size: 14px; font-weight: 700;
+  border-radius: var(--r10); border: none;
+  cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.docviewer-sign-btn svg { width: 17px; height: 17px; }
+
+/* ══════════════════════════════════════
+   SHEET: DOC ACCESS (Kondisi C)
+══════════════════════════════════════ */
+.doc-access-doc-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg2);
+  border-radius: var(--r10);
+  margin-bottom: 12px;
+}
+.doc-access-doc-icon {
+  width: 40px; height: 40px;
+  background: #E8F0FE; border-radius: var(--r8);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.doc-access-doc-icon svg { width: 22px; height: 22px; color: var(--blue); }
+.doc-access-doc-info { flex: 1; min-width: 0; }
+.doc-access-doc-name {
+  font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.doc-access-doc-sender { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.doc-access-note {
+  background: var(--bg-info); border: 1px solid var(--border-info);
+  border-radius: var(--r10); padding: 11px 13px;
+  font-size: 13px; color: var(--fg-info); line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+/* ══════════════════════════════════════
+   SHEET: DECLINE PICKER
+══════════════════════════════════════ */
+.picker-option {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r12);
+  cursor: pointer; margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.picker-option:last-child { margin-bottom: 0; }
+.picker-option:active { background: var(--bg2); border-color: var(--border2); }
+.picker-option-icon {
+  width: 42px; height: 42px; border-radius: var(--r10);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.picker-option-icon.warn { background: var(--bg-warning); }
+.picker-option-icon.warn svg { color: var(--fg-warning); }
+.picker-option-icon.neutral { background: var(--bg2); }
+.picker-option-icon.neutral svg { color: var(--text2); }
+.picker-option-icon svg { width: 22px; height: 22px; }
+.picker-option-body { flex: 1; }
+.picker-option-label { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.picker-option-sub { font-size: 12px; color: var(--text3); line-height: 1.35; }
+.picker-option-arrow { color: var(--text3); }
+.picker-option-arrow svg { width: 16px; height: 16px; }
+
+/* ══════════════════════════════════════
+   DECLINE NODOC BOX
+══════════════════════════════════════ */
+.nodoc-impact-box {
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border-danger);
+  border-radius: var(--r12);
+  background: var(--bg-danger);
+}
+.nodoc-impact-title { font-size: 12px; font-weight: 700; color: var(--fg-danger); margin-bottom: 8px; }
+.nodoc-impact-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 13px; color: var(--text); line-height: 1.4; margin-bottom: 6px;
+}
+.nodoc-impact-item:last-child { margin-bottom: 0; }
+.nodoc-impact-item svg { width: 15px; height: 15px; color: var(--fg-danger); flex-shrink: 0; margin-top: 1px; }
+
+/* ══════════════════════════════════════
+   SCREEN: NOTIFICATIONS
+══════════════════════════════════════ */
+#screen-notifications { display: none; position: absolute; inset: 0; background: white; flex-direction: column; }
+
+.notif-screen-header {
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+}
+.notif-screen-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.notif-screen-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.notif-read-all {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--red);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+}
+.notif-screen-sub {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 14px;
+}
+.notif-pill-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.notif-pill-tabs::-webkit-scrollbar { display: none; }
+.notif-pill-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text2);
+  border: 1.5px solid var(--border2);
+  cursor: pointer;
+  white-space: nowrap;
+  background: white;
+  font-family: var(--font);
+}
+.notif-pill-tab.active {
+  border-color: var(--blue);
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.notif-screen-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.notif-date-header {
+  padding: 10px 16px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.3px;
+  background: var(--bg2);
+}
+.notif-screen-item {
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--border3);
+  align-items: flex-start;
+}
+.notif-ent-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#1565C0 40%,#E65100 100%);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.notif-ent-icon svg { width: 22px; height: 22px; }
+.notif-screen-content { flex: 1; min-width: 0; }
+.notif-screen-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.notif-screen-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.notif-screen-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  border: 1.5px solid var(--border2);
+  background: white;
+  color: var(--text);
+}
+.notif-screen-btn.reject {
+  border-color: var(--red);
+  color: var(--red);
+}
+.notif-screen-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.notif-ent-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-info);
+  color: var(--fg-info);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-info);
+}
+.notif-item-time {
+  font-size: 12px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+
+  <!-- ══════════════════════════════════════
+       SCREEN: LOCK SCREEN (entry point)
+  ══════════════════════════════════════ -->
+  <div id="screen-lock">
+    <div class="lock-status">
+      <div class="lock-status-left">TSEL</div>
+      <div class="status-bar-right" style="color:white;">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box" style="border-color:white;"><div class="battery-fill" style="background:white;width:86%;"></div></div>
+        <span style="font-size: 10px; color: white; position: absolute; right: 30px; margin-top: 2px; font-weight: 700;">86</span>
+      </div>
+    </div>
+
+    <div class="lock-clock">
+      <div class="lock-date">Friday, 25 August</div>
+      <div class="lock-time">16.10</div>
+    </div>
+
+    <div class="lock-widgets">
+      <div class="lock-widget">
+        <div class="lock-widget-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          86%
+        </div>
+        <div class="lock-widget-val" style="font-size: 14px;">Bulan ini</div>
+        <div style="height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 6px; overflow: hidden;">
+          <div style="height: 100%; width: 86%; background: white; border-radius: 2px;"></div>
+        </div>
+      </div>
+      <div class="lock-widget">
+        <div class="lock-widget-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg>
+          Maghrib
+        </div>
+        <div class="lock-widget-val">1.29.33</div>
+        <div class="lock-widget-sub">LOJAJAR</div>
+      </div>
+    </div>
+
+    <div class="lock-notif-area">
+      <div class="lock-notif" onclick="openFromNotif()">
+        <div class="lock-notif-icon">
+          <img src="data:image/jpeg;base64,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" alt="privy"/>
+        </div>
+        <div class="lock-notif-content">
+          <div class="lock-notif-title-row">
+            <div class="lock-notif-title">Undangan bergabung dengan enterprise</div>
+            <div class="lock-notif-time">now</div>
+          </div>
+          <div class="lock-notif-body">Bambang Pamungkas (BP1243) mengundang Anda untuk bergabung...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lock-tap-hint">Tap notification to start demo →</div>
+
+    <div class="lock-bottom-buttons">
+      <div class="lock-bottom-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 2v4M16 2v4M12 2v4M9 7h6l-1 13h-4z"/></svg>
+      </div>
+      <div class="lock-bottom-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </div>
+    </div>
+
+    <div class="home-indicator white"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: LOGIN
+  ══════════════════════════════════════ -->
+  <div id="screen-login">
+    <div class="status-bar">
+      <span class="status-bar-time">17.34</span>
+      <div class="status-bar-right">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box"><div class="battery-fill" style="width: 37%;"></div></div>
+      </div>
+    </div>
+
+    <div class="login-topbar">
+      <button class="login-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="login-help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 001 1h3v-5H4a1 1 0 00-1 1zm17-1h-3v5h3a1 1 0 001-1v-3a1 1 0 00-1-1zM6 8l2 2M16 8l-2 2M12 2a8 8 0 00-8 8v5h3v-5a5 5 0 0110 0v5h3v-5a8 8 0 00-8-8zm-2 18a3 3 0 003-3h-3a3 3 0 000 6v-3z" fill="currentColor"/></svg>
+      </button>
+    </div>
+
+    <div class="login-body">
+      <div class="login-heading">Hi, Welcome Back!  👋</div>
+      <div class="login-sub">It's good to see you again</div>
+
+      <div class="login-privy-card">
+        <div class="login-avatar">D</div>
+        <div class="login-id-info">
+          <div class="login-id-top">
+            <span class="login-id-name">WM0905</span>
+            <span class="login-verified">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>
+            </span>
+          </div>
+          <div class="login-id-masked">D**** A******* S******* P****</div>
+        </div>
+        <button class="login-change-btn">Change</button>
+      </div>
+
+      <button class="login-submit" onclick="doLogin()">Log in</button>
+
+      <div class="login-register-row">Don't have an account? <a href="#">Register</a></div>
+    </div>
+
+    <div class="login-region">
+      Region: <strong>Indonesia</strong>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: HOME
+  ══════════════════════════════════════ -->
+  <div id="screen-home">
+    <div class="status-bar">
+      <span class="status-bar-time">17.35</span>
+      <div class="status-bar-right">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box"><div class="battery-fill" style="width: 36%;"></div></div>
+      </div>
+    </div>
+
+    <div class="home-header">
+      <div class="home-greet">
+        <div class="home-avatar">
+          <svg viewBox="0 0 24 28" fill="currentColor"><circle cx="12" cy="8" r="5"/><path d="M2 24c0-5.5 4.5-10 10-10s10 4.5 10 10"/></svg>
+        </div>
+        <div class="home-greet-text">
+          <div class="home-greet-hello">Hello, <span id="home-user-name">Dimas Aprilian Sulaiman Putra</span></div>
+          <div class="home-greet-sub">How's today? Be careful on your way home.</div>
+        </div>
+        <div class="home-help-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+        </div>
+      </div>
+
+      <!-- Plan card -->
+      <div class="plan-card" id="home-plan-card">
+        <div class="plan-top">
+          <div class="plan-id">
+            <div class="plan-id-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 5v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V5l-8-3z"/></svg>
+            </div>
+            <span id="home-plan-id">WM0905</span>
+            <span class="plan-id-chev">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+          </div>
+          <div class="plan-pill" id="home-plan-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span id="home-plan-label">Personal Plan</span>
+          </div>
+        </div>
+        <div class="plan-body">
+          <div class="plan-stats">
+            <div class="plan-stat">
+              <div class="plan-stat-label">Signing quota</div>
+              <div class="plan-stat-row">
+                <div class="plan-stat-val" id="home-quota">Unlimited</div>
+                <div class="plan-stat-chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="plan-stat">
+              <div class="plan-stat-label">e-Meterai</div>
+              <div class="plan-stat-row">
+                <div class="plan-stat-val">149</div>
+                <div class="plan-stat-plus">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="plan-info-row">
+            <span class="plan-info-icon">i</span>
+            <span id="home-plan-expiry">Expired: May 07, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action grid -->
+      <div class="home-actions" id="home-action-grid">
+        <div class="home-action">
+          <div class="home-action-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4M20 21H4a2 2 0 01-2-2v-4h4l2 2h8l2-2h4v4a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div class="home-action-label">Upload d...</div>
+        </div>
+        <div class="home-action">
+          <div class="home-action-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="10" cy="14" r="2.5"/><line x1="12" y1="16" x2="14" y2="18"/></svg>
+          </div>
+          <div class="home-action-label">Verify do...</div>
+        </div>
+        <div class="home-action">
+          <div class="home-action-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 14h8M8 18h5"/></svg>
+          </div>
+          <div class="home-action-label">Transactions</div>
+        </div>
+        <div class="home-action">
+          <div class="home-action-icon gold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20l-2-11-4 3-4-7-4 7-4-3z"/></svg>
+          </div>
+          <div class="home-action-label">Privylege</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-content">
+      <!-- Promo banner -->
+      <div class="home-banner">
+        <div class="home-banner-logos">
+          <span class="banner-logo-bl">belajarlagi</span>
+          <span class="banner-heart">&#10084;</span>
+          <span class="banner-logo-privy">privy</span>
+        </div>
+        <div class="home-banner-dark">
+          <div class="home-banner-text-col">
+            <div class="home-banner-head">Akses AI BelajarLagi</div>
+            <div class="home-banner-red-box">1 Bulan GRATIS</div>
+            <div class="home-banner-desc">Eksklusif untuk pengguna<br/><strong style="color:white;">Privy Personal &amp; Enterprise Plan</strong></div>
+            <span class="home-banner-pill">Kuota terbatas</span>
+            <div class="home-banner-note">*Syarat dan ketentuan berlaku.</div>
+          </div>
+          <div class="home-banner-robot">
+            <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+              <!-- Robot body -->
+              <ellipse cx="45" cy="75" rx="22" ry="8" fill="rgba(255,255,255,0.08)"/>
+              <!-- Legs -->
+              <rect x="33" y="62" width="8" height="14" rx="4" fill="#1E3A6A"/>
+              <rect x="49" y="62" width="8" height="14" rx="4" fill="#1E3A6A"/>
+              <!-- Body -->
+              <rect x="25" y="38" width="40" height="26" rx="10" fill="#2A4A8C"/>
+              <!-- Chest light -->
+              <circle cx="45" cy="51" r="6" fill="#E42E2C" opacity="0.9"/>
+              <circle cx="45" cy="51" r="3" fill="white"/>
+              <!-- Arms -->
+              <rect x="10" y="40" width="16" height="8" rx="4" fill="#2A4A8C"/>
+              <rect x="64" y="40" width="16" height="8" rx="4" fill="#2A4A8C"/>
+              <!-- Hands holding cards -->
+              <rect x="4" y="30" width="14" height="18" rx="3" fill="white" opacity="0.9"/>
+              <rect x="6" y="33" width="10" height="3" rx="1.5" fill="#1565C0"/>
+              <rect x="6" y="38" width="7" height="2" rx="1" fill="#ccc"/>
+              <rect x="72" y="30" width="14" height="18" rx="3" fill="white" opacity="0.9"/>
+              <rect x="74" y="33" width="10" height="3" rx="1.5" fill="#7B3FC4"/>
+              <rect x="74" y="38" width="7" height="2" rx="1" fill="#ccc"/>
+              <!-- Neck -->
+              <rect x="40" y="30" width="10" height="10" rx="4" fill="#2A4A8C"/>
+              <!-- Head -->
+              <rect x="28" y="12" width="34" height="22" rx="10" fill="#2A4A8C"/>
+              <!-- Eyes -->
+              <circle cx="38" cy="22" r="5" fill="#0A1628"/>
+              <circle cx="52" cy="22" r="5" fill="#0A1628"/>
+              <circle cx="38" cy="22" r="2.5" fill="#E42E2C"/>
+              <circle cx="52" cy="22" r="2.5" fill="#E42E2C"/>
+              <circle cx="39" cy="21" r="1" fill="white"/>
+              <circle cx="53" cy="21" r="1" fill="white"/>
+              <!-- Antenna -->
+              <line x1="45" y1="12" x2="45" y2="5" stroke="#2A4A8C" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="45" cy="4" r="3" fill="#E42E2C"/>
+              <!-- Floating decorative elements -->
+              <rect x="60" y="5" width="16" height="16" rx="4" fill="rgba(255,255,255,0.15)" transform="rotate(15 68 13)"/>
+              <rect x="14" y="8" width="12" height="12" rx="3" fill="rgba(255,255,255,0.1)" transform="rotate(-10 20 14)"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="home-banner-dots">
+        <div class="home-banner-dot on"></div>
+        <div class="home-banner-dot"></div>
+      </div>
+
+      <!-- Pending tasks -->
+      <div class="pending-section">
+        <div class="pending-head">
+          <div class="pending-count">99+</div>
+          <div class="pending-title-group">
+            <div class="pending-title">Pending tasks</div>
+            <div class="pending-meta">Updated today • 17:35</div>
+          </div>
+        </div>
+
+        <div class="pending-filter">
+          <div class="pending-chip active" id="pending-chip-1">
+            <span id="pending-chip-1-name">PT. Privy I...</span>
+            <span class="pending-chip-badge">99+</span>
+          </div>
+          <div class="pending-chip">
+            <span>PT Privy (...</span>
+            <span class="pending-chip-badge">99+</span>
+          </div>
+          <div class="pending-chip">
+            <span>DIMAS AP...</span>
+          </div>
+        </div>
+
+        <div class="pending-task">
+          <div class="pending-task-av" style="background: linear-gradient(135deg, #5a7a9c, #2d4a6e);"></div>
+          <div class="pending-task-info">
+            <div class="pending-task-head">
+              <div class="pending-task-author">Rastra Sewakottama Putra Persa...</div>
+              <div class="pending-task-date">20 Apr 2026</div>
+            </div>
+            <div class="pending-task-title">Surat Pengangkatan CSIRT - Dimas Aprilian Sulaiman Putra</div>
+          </div>
+        </div>
+
+        <div class="pending-task">
+          <div class="pending-task-av" style="background: #D9DDE3;">
+            <svg viewBox="0 0 24 24" fill="#A0ABB9" style="width:26px;height:26px;margin:8px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </div>
+          <div class="pending-task-info">
+            <div class="pending-task-head">
+              <div class="pending-task-author">INDRIA ANGGRAINI</div>
+              <div class="pending-task-date">20 Apr 2026</div>
+            </div>
+            <div class="pending-task-title">Struktur & Tanggung Jawab Personel CSIRT - 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center; padding: 12px 0 90px;">
+        <div class="docs-require-pill">
+          Documents require action
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="bn-item active">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z"/></svg>
+      </div>
+      <div class="bn-item" onclick="goToDocList()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="bn-item scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+      </div>
+      <div class="bn-item" onclick="goToActions()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <div class="bn-badge">3</div>
+      </div>
+      <div class="bn-item" onclick="goToNotifications()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="bn-badge">3</div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: ACTIONS REQUIRED
+  ══════════════════════════════════════ -->
+  <div id="screen-actions">
+    <div class="status-bar">
+      <span class="status-bar-time">17.35</span>
+      <div class="status-bar-right">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box"><div class="battery-fill" style="width: 36%;"></div></div>
+      </div>
+    </div>
+
+    <div class="actions-topbar">
+      <button class="actions-account-btn" onclick="toggleDrawer()">
+        <div class="actions-account-av" id="actions-topbar-av">D</div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="actions-title">Actions required</div>
+      <button class="actions-add-btn" onclick="handleUploadClick()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      </button>
+    </div>
+
+    <div class="actions-search-wrap">
+      <input type="text" class="actions-search" placeholder="Search"/>
+    </div>
+
+    <div class="actions-filters">
+      <button class="actions-filter-chip">
+        All actions <span class="actions-filter-chip-badge">99+</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="actions-filter-chip">
+        All periods
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="actions-filters-divider"></div>
+      <button class="actions-filter-chip">
+        Sort by
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+
+    <div class="actions-list" id="actions-list">
+      <!-- Injected by JS -->
+    </div>
+
+    <div class="bottom-nav">
+      <div class="bn-item" onclick="goToHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="bn-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="bn-item scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+      </div>
+      <div class="bn-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <div class="bn-item" onclick="goToNotifications()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="bn-badge">2</div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       DRAWER (Account menu)
+  ══════════════════════════════════════ -->
+  <div class="drawer-backdrop" id="drawer-backdrop" onclick="toggleDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-plan-card">
+      <div class="drawer-plan-top">
+        <div>
+          <div class="drawer-plan-label" id="drawer-plan-label">Personal plan</div>
+          <div class="drawer-plan-active">Active</div>
+        </div>
+        <div class="drawer-plan-chev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="drawer-plan-sub" id="drawer-plan-sub">Until May 07, 2026</div>
+    </div>
+
+    <div class="drawer-account-selector">
+      <div class="drawer-account-av" id="drawer-account-av">D</div>
+      <div class="drawer-account-name" id="drawer-account-name">DIMAS APRILIAN SULAIMAN PUT...</div>
+      <div class="drawer-account-caret">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+
+    <div class="drawer-nav">
+      <div class="drawer-nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+        Actions required
+        <span class="drawer-nav-badge">99+</span>
+      </div>
+      <div class="drawer-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 7 12 14 22 7"/></svg>
+        Inbox
+      </div>
+      <div class="drawer-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="10 16 14 12 10 12"/><line x1="14" y1="12" x2="14" y2="18"/></svg>
+        Sent
+      </div>
+      <div class="drawer-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13l1.5 1.5L14 12"/></svg>
+        Draft
+      </div>
+      <div class="drawer-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+        Completed
+      </div>
+      <div class="drawer-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v10a1 1 0 001 1h14a1 1 0 001-1V9"/><path d="M10 13h4"/></svg>
+        Archive
+      </div>
+      <div class="drawer-divider"></div>
+      <div class="drawer-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><rect x="2" y="2" width="4" height="20" rx="1" stroke="none" fill="none"/></svg>
+        Contacts
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       BOTTOM SHEETS
+  ══════════════════════════════════════ -->
+  <div class="bottom-sheet-backdrop" id="sheet-backdrop"></div>
+
+  <!-- INVITATION SHEET -->
+  <div class="bottom-sheet" id="sheet-invitation">
+    <div class="bottom-sheet-handle"></div>
+    <button class="sheet-close" onclick="dismissInvitation()" aria-label="Tutup undangan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="bottom-sheet-body">
+      <div class="invite-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <div class="invite-title">Selamat datang di enterprise! 🎉</div>
+      <div class="invite-center">
+        <div class="invite-ent-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          Bambang Pamungkas (BP1243)
+        </div>
+      </div>
+      <div class="invite-desc">Anda diundang bergabung. Nikmati akses ke fitur-fitur unggulan Privy Enterprise:</div>
+      <div class="invite-features">
+        <div class="invite-feature-pill">BulkSign</div>
+        <div class="invite-feature-pill">Seal</div>
+        <div class="invite-feature-pill">Stamp</div>
+        <div class="invite-feature-pill">e-Meterai</div>
+        <div class="invite-feature-pill">e-Sign</div>
+      </div>
+      <div id="invite-upload-note" style="display:none;margin-top:10px;padding:10px 12px;border-radius:var(--r8);background:#FFF5E5;border:1px solid #FFE0AD;color:#B36F00;font-size:12.5px;line-height:1.5;text-align:left;">
+        <strong>Upload dokumen memerlukan akun enterprise.</strong><br/>
+        Terima undangan terlebih dahulu untuk dapat mengupload dokumen ke akun enterprise ini.
+      </div>
+      <div class="flow-note">Jika ditutup, undangan tetap tersedia di Notifications → Account dan dapat dibuka lagi kapan saja.</div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <div class="btn-row-sheet">
+        <button class="btn-sheet danger-outline" onclick="showDeclineConfirm()">Tolak</button>
+        <button class="btn-sheet primary" onclick="showTnc()">Terima Undangan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TNC SHEET -->
+  <div class="bottom-sheet" id="sheet-tnc">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="tnc-sheet-title">Syarat dan Ketentuan Sertifikat Elektronik Terafiliasi</div>
+      <div class="tnc-sheet-date">Tanggal efektif: 31 Januari 2026</div>
+      <div class="tnc-user-info">
+        <div class="tnc-user-field">
+          <div class="tnc-user-label">Nama</div>
+          <div class="tnc-user-value">Dimas Aprilian Sulaiman Putra</div>
+        </div>
+        <div class="tnc-user-field">
+          <div class="tnc-user-label">PrivyID atau email</div>
+          <div class="tnc-user-value">WM0905</div>
+        </div>
+        <div class="tnc-user-field">
+          <div class="tnc-user-label">Posisi</div>
+          <div class="tnc-user-value">Staff</div>
+        </div>
+      </div>
+      <div class="tnc-content-wrap">
+        <div class="tnc-text" id="tnc-text" onscroll="onTncScroll()">
+          <p>Syarat dan Ketentuan ini mengatur penggunaan Sertifikat Elektronik yang terafiliasi dengan suatu badan hukum atau badan usaha ("Enterprise") di dalam layanan Privy Enterprise Suite ("Syarat dan Ketentuan"). Syarat dan Ketentuan ini berlaku khusus bagi Pengguna yang menerima undangan dari suatu Enterprise untuk bergabung sebagai Akun Karyawan.</p>
+          <ol>
+            <li><strong>Definisi</strong><br/>Privy merujuk pada PT Privy Identitas Digital, perusahaan yang terdaftar dan beroperasi di bawah hukum Republik Indonesia yang menyediakan layanan identitas digital dan tanda tangan elektronik.</li>
+            <li><strong>Enterprise</strong> merujuk pada badan hukum atau badan usaha yang telah terdaftar dan menggunakan Layanan Privy Enterprise Suite.</li>
+            <li><strong>Pengguna</strong> merujuk pada individu yang memiliki akun Privy dan diundang oleh Enterprise untuk bergabung dan menggunakan fitur tertentu dalam Layanan Enterprise Suite.</li>
+            <li><strong>Sertifikat Elektronik Terafiliasi</strong> merujuk pada sertifikat elektronik yang diterbitkan kepada Pengguna berdasarkan undangan dari Enterprise, yang mengaitkan identitas Pengguna dengan Enterprise.</li>
+            <li>Privy dapat menyediakan data, catatan sistem, atau informasi teknis yang relevan sebagai bagian dari pemenuhan kewajiban hukum atau permintaan yang sah dari otoritas yang berwenang, tanpa menempatkan Privy sebagai pihak dalam sengketa tersebut.</li>
+            <li><strong>Hak dan Kewajiban Pengguna</strong><br/>Pengguna berhak menggunakan Sertifikat Elektronik Terafiliasi untuk keperluan tanda tangan elektronik sesuai dengan hukum dan regulasi yang berlaku. Pengguna wajib menjaga kerahasiaan kredensial autentikasi dan tidak membagikannya kepada pihak ketiga mana pun.</li>
+            <li><strong>Peran dan Batasan Privy</strong><br/>Privy bertindak semata-mata sebagai penyedia layanan teknologi dan bukan merupakan pihak dalam hubungan kerja, keagenan, atau hubungan hukum lainnya antara Pengguna dan Enterprise.</li>
+            <li><strong>Penyelesaian Sengketa</strong><br/>Segala ketidaksepakatan, keberatan, atau sengketa yang timbul antara Pengguna dan Enterprise akan diselesaikan langsung antara Pengguna dan Enterprise.</li>
+            <li><strong>Keberlakuan Ketentuan Lain</strong><br/>Ketentuan ini merupakan bagian yang tidak terpisahkan dari <a href="#">Ketentuan Penggunaan Layanan Enterprise Suite</a>.</li>
+          </ol>
+        </div>
+        <div class="tnc-scroll-hint" id="tnc-scroll-hint">
+          Scroll ke bawah
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <div class="tnc-checkbox" id="tnc-checkbox" onclick="toggleTncCheck()">
+        <div class="tnc-checkbox-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="tnc-checkbox-label">Saya setuju dengan syarat dan ketentuan</div>
+      </div>
+      <div class="btn-row-sheet" style="margin-top: 8px;">
+        <button class="btn-sheet" onclick="cancelTnc()">Batalkan</button>
+        <button class="btn-sheet primary" id="btn-tnc-continue" disabled onclick="showAcceptSuccess()">Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCEPT SUCCESS SHEET -->
+  <div class="bottom-sheet" id="sheet-success">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/>
+        </svg>
+      </div>
+      <div class="success-title">Selamat bergabung! 🎊</div>
+      <div class="success-desc">Akun Anda kini terhubung ke <strong style="color:var(--text)">Bambang Pamungkas (BP1243)</strong>. Ini yang Anda dapatkan sekarang:</div>
+      <div class="benefit-box">
+        <div class="benefit-title">Benefit yang kamu dapatkan</div>
+        <div class="benefit-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div><strong>BulkSign</strong> — tandatangani ratusan dokumen sekaligus dengan satu klik, hemat waktu hingga 80%.</div>
+        </div>
+        <div class="benefit-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div><strong>Seal & Stamp resmi enterprise</strong> — dokumen Anda memiliki identitas hukum yang diakui perusahaan.</div>
+        </div>
+        <div class="benefit-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div><strong>Sertifikat Elektronik Terafiliasi</strong> — identitas digital Anda terverifikasi dan terikat langsung ke enterprise.</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <button class="btn-sheet primary full" onclick="goToEnterpriseActions()">Mulai gunakan fitur enterprise →</button>
+    </div>
+  </div>
+
+  <!-- DECLINE CONFIRM SHEET -->
+  <div class="bottom-sheet" id="sheet-decline">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="warning-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="warning-title">Yakin ingin menolak?</div>
+      <div class="invite-desc">Undangan ini <strong style="color:var(--text)">tidak dapat dipulihkan</strong> setelah ditolak. Untuk bergabung lagi, Anda perlu meminta admin mengirim ulang undangan.</div>
+      <div class="impact-box">
+        <div class="impact-title">Dokumen yang akan terpengaruh:</div>
+        <div class="impact-list">
+          <div><span>1</span><p>Perjanjian Kerja Sama Bambang Pamungkas.pdf</p></div>
+          <div><span>2</span><p>Surat Persetujuan Pengadaan Q2.pdf</p></div>
+          <div><span>3</span><p>Dokumen Persetujuan Internal.pdf</p></div>
+          <div><span>+2</span><p>dokumen lainnya</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <div class="btn-row-sheet">
+        <button class="btn-sheet" onclick="backToDeclinePicker()">Kembali</button>
+        <button class="btn-sheet danger-outline" onclick="showDeclineSuccess()">Tolak undangan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECLINE SUCCESS SHEET -->
+  <div class="bottom-sheet" id="sheet-decline-success">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="neutral-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <div class="warning-title">Undangan ditolak</div>
+      <div class="invite-desc">Oke, tidak masalah. Undangan dari <strong style="color:var(--text)">Bambang Pamungkas (BP1243)</strong> telah Anda tolak. Hubungi admin enterprise jika suatu saat Anda berubah pikiran.</div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <button class="btn-sheet full" onclick="goToPersonalActions()">Kembali ke dashboard</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: NOTIFICATIONS
+  ══════════════════════════════════════ -->
+  <div id="screen-notifications">
+    <div class="status-bar">
+      <span class="status-bar-time">12:57</span>
+      <div class="status-bar-right">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box"><div class="battery-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="notif-screen-header">
+      <div class="notif-screen-title-row">
+        <div class="notif-screen-title">Notifications</div>
+        <button class="notif-read-all">Read all</button>
+      </div>
+      <div class="notif-screen-sub">Updated today • 12:57</div>
+      <div class="notif-pill-tabs">
+        <button class="notif-pill-tab">Document</button>
+        <button class="notif-pill-tab active">Account</button>
+        <button class="notif-pill-tab">Promotion</button>
+      </div>
+    </div>
+
+    <div class="notif-screen-list">
+      <div class="notif-date-header">12 February 2026</div>
+      <div class="notif-screen-item">
+        <div class="notif-ent-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" fill="white" fill-opacity="0.9"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="12" x2="12" y2="16" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notif-screen-content">
+          <div class="notif-screen-text"><strong>Dimas Aprilian Sulaiman Putra (WM0905)</strong> invited you to join <strong>Test Mbul Ganz</strong></div>
+          <div class="notif-screen-actions">
+            <button class="notif-screen-btn reject" onclick="showDeclineConfirmFromNotif()">Reject</button>
+            <button class="notif-screen-btn" onclick="acceptFromNotif()">Accept</button>
+          </div>
+          <div class="notif-screen-meta">
+            <span class="notif-ent-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="width:10px;height:10px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+              Test Mbul Ganz
+            </span>
+            <span class="notif-item-time">12:56</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="notif-date-header">05 February 2026</div>
+      <div class="notif-screen-item">
+        <div class="notif-ent-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" fill="white" fill-opacity="0.9"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="12" x2="12" y2="16" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notif-screen-content">
+          <div class="notif-screen-text"><strong>Testing Fahmi (FH0862)</strong> invited you to join <strong>PT. Mbul Gans B4T</strong></div>
+          <div class="notif-screen-actions">
+            <button class="notif-screen-btn reject" onclick="showDeclineConfirmFromNotif()">Reject</button>
+            <button class="notif-screen-btn" onclick="acceptFromNotif()">Accept</button>
+          </div>
+          <div class="notif-screen-meta">
+            <span class="notif-ent-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="width:10px;height:10px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+              PT. Mbul Gans B4T
+            </span>
+            <span class="notif-item-time">11:16</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="notif-date-header">18 December 2025</div>
+      <div class="notif-screen-item">
+        <div class="notif-ent-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" fill="white" fill-opacity="0.9"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="12" x2="12" y2="16" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="notif-screen-content">
+          <div class="notif-screen-text">Renew your certificate now to continue signing...</div>
+          <div class="notif-screen-meta">
+            <span></span>
+            <span class="notif-item-time">09:57</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="bn-item" onclick="goToHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="bn-item" onclick="goToActions()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="bn-item scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+      </div>
+      <div class="bn-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <div class="bn-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="bn-badge">2</div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SCREEN: EMAIL (Kondisi B)
+  ══════════════════════════════════════ -->
+  <div id="screen-email">
+    <div class="status-bar">
+      <span class="status-bar-time">09.24</span>
+      <div class="status-bar-right">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box"><div class="battery-fill" style="width:72%;"></div></div>
+      </div>
+    </div>
+    <!-- Gmail-style app header -->
+    <div class="email-app-header">
+      <div class="email-app-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 7 12 13 22 7"/></svg>
+      </div>
+      <div>
+        <div class="email-app-name">Gmail</div>
+        <div class="email-app-unread">1 pesan belum dibaca</div>
+      </div>
+    </div>
+    <div class="email-scroll">
+      <!-- Email client chrome (Mac dots + subject) -->
+      <div class="email-client-bar">
+        <div class="email-dot red"></div>
+        <div class="email-dot yellow"></div>
+        <div class="email-dot green"></div>
+      </div>
+      <div class="email-subject-bar">
+        <span class="email-subject-label">Subject:</span>
+        <span class="email-subject-val">Undangan Enterprise — PT. Privy Identitas Digital</span>
+      </div>
+      <!-- Actual email card -->
+      <div class="email-card">
+        <div class="email-header-stripe"></div>
+        <div class="email-body">
+          <!-- Illustration -->
+          <div class="email-illustration">
+            <span class="bldg-icon">🏢</span>
+            <div class="info-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8" stroke-width="3"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+            </div>
+          </div>
+          <!-- Greeting -->
+          <div class="email-greeting">Halo {Username},</div>
+          <div class="email-greeting-sub">Hi [UserName],</div>
+          <!-- Block 1 -->
+          <div class="email-block">
+            <div class="email-block-main">Bambang Pamungkas (BP1243) mengundang Anda untuk bergabung dengan Enterprise PT. Privy Identitas Digital.</div>
+            <div class="email-block-sub">Bambang Pamungkas (BP1243) has invited you to join the PT. Privy Identitas Digital Enterprise.</div>
+          </div>
+          <!-- Block 2 -->
+          <div class="email-block">
+            <div class="email-block-main">Dengan bergabung ke Enterprise ini, Anda dapat mengakses fitur tingkat enterprise dan berkolaborasi di dalam organisasi.</div>
+            <div class="email-block-sub">By joining this Enterprise, you'll be able to access enterprise-level features and collaborate within the organization.</div>
+          </div>
+          <div class="email-divider"></div>
+          <!-- Block 3 -->
+          <div class="email-block">
+            <div class="email-block-main">Anda dapat menerima atau menolak undangan ini melalui tombol di bawah.</div>
+            <div class="email-block-sub">You can accept or reject this invitation using the button below.</div>
+          </div>
+          <!-- Block 4 -->
+          <div class="email-block">
+            <div class="email-block-main">Apabila tombol tidak membuka undangan secara langsung, silakan akses melalui notifikasi → tab Account.</div>
+            <div class="email-block-sub">If the button doesn't open the invitation directly, access it through Notifications → Account tab.</div>
+          </div>
+          <!-- CTA -->
+          <button class="email-cta-btn" onclick="startDeeplink()">Lihat undangan</button>
+          <div class="email-cta-sub">See invitation · Click to simulate deep link redirect</div>
+          <div class="email-divider"></div>
+          <!-- Signature -->
+          <div class="email-sign">
+            <div class="email-sign-line">Salam hangat,</div>
+            <div class="email-sign-name">Tim Privy</div>
+            <div class="email-sign-name2">PT Privy Identitas Digital</div>
+          </div>
+        </div>
+        <!-- Footer -->
+        <div class="email-footer-card">
+          <div class="email-footer-note">Catatan: Pesan ini dikirimkan ke alamat surat elektronik yang tidak dipantau. Jangan balas pesan ini. Jika ada pertanyaan, silakan hubungi kami di helpdesk@privy.id.</div>
+          <div class="email-footer-note2">Note: Don't reply to this email. This email is sent from an unmonitored e-mail address. If you have questions, please reach us at helpdesk@privy.id</div>
+          <div class="email-footer-bottom">
+            <div class="email-footer-addr"><strong>PT Privy Identitas Digital</strong><br/>Jl. Kemang Raya no. 15 Jakarta Selatan 12730</div>
+            <div class="email-socials">
+              <div class="social-icon si-fb"><svg viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></div>
+              <div class="social-icon si-x"><svg viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></div>
+              <div class="social-icon si-ig"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
+              <div class="social-icon si-web"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEEPLINK OVERLAY (Kondisi B) -->
+  <div id="deeplink-overlay">
+    <div class="deeplink-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    </div>
+    <div class="deeplink-text">Membuka Privy…</div>
+    <div class="deeplink-bar-wrap"><div class="deeplink-bar" id="deeplink-bar"></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: DOC VIEWER (Kondisi C)
+  ══════════════════════════════════════ -->
+  <div id="screen-docviewer">
+    <div class="status-bar" style="color:#111; background:white;">
+      <span class="status-bar-time">17.35</span>
+      <div class="status-bar-right" style="color:#111;">
+        <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="8" width="3" height="3" rx="0.5"/><rect x="4" y="6" width="3" height="5" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2C4.9 2 1.7 3.4 0 5.6l1.5 1.3C3 5.3 5.6 4.2 8.5 4.2s5.5 1.1 7 2.7L17 5.6C15.3 3.4 12.1 2 8.5 2zM8.5 6.4c-2.1 0-4 .8-5.2 2.1L4.7 9.8c.9-1 2.3-1.6 3.8-1.6s2.9.6 3.8 1.6l1.4-1.3c-1.2-1.3-3.1-2.1-5.2-2.1zM8.5 10.6c-1.1 0-2.1.4-2.7 1L8.5 14l2.7-2.4c-.6-.6-1.6-1-2.7-1z"/></svg>
+        <div class="battery-box" style="border-color:#111;"><div class="battery-fill" style="background:#111;width:85%;"></div></div>
+      </div>
+    </div>
+    <div class="docviewer-topbar">
+      <button class="docviewer-back-btn" onclick="backFromDocViewer()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="docviewer-title">test seal dari enterprise lain</div>
+      <div class="docviewer-page-nav">
+        <button class="docviewer-nav-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="docviewer-nav-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <button class="docviewer-menu-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+    </div>
+    <div class="docviewer-page-area">
+      <div class="docviewer-page">
+        <div class="dv-doc-text">Test 123</div>
+        <!-- QR code with Privy watermark -->
+        <div class="dv-qr-wrap">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+            <!-- Top-left position square -->
+            <rect x="2" y="2" width="18" height="18" fill="none" stroke="#111" stroke-width="2"/>
+            <rect x="6" y="6" width="10" height="10" fill="#111"/>
+            <!-- Top-right position square -->
+            <rect x="44" y="2" width="18" height="18" fill="none" stroke="#111" stroke-width="2"/>
+            <rect x="48" y="6" width="10" height="10" fill="#111"/>
+            <!-- Bottom-left position square -->
+            <rect x="2" y="44" width="18" height="18" fill="none" stroke="#111" stroke-width="2"/>
+            <rect x="6" y="48" width="10" height="10" fill="#111"/>
+            <!-- Data modules (random-ish pattern) -->
+            <rect x="22" y="2" width="4" height="4" fill="#111"/><rect x="28" y="2" width="4" height="4" fill="#111"/>
+            <rect x="24" y="8" width="4" height="4" fill="#111"/><rect x="32" y="6" width="4" height="4" fill="#111"/>
+            <rect x="38" y="4" width="4" height="4" fill="#111"/>
+            <rect x="22" y="14" width="4" height="4" fill="#111"/><rect x="30" y="14" width="4" height="4" fill="#111"/>
+            <rect x="36" y="12" width="4" height="4" fill="#111"/>
+            <rect x="2" y="22" width="4" height="4" fill="#111"/><rect x="8" y="24" width="4" height="4" fill="#111"/>
+            <rect x="16" y="22" width="4" height="4" fill="#111"/>
+            <rect x="22" y="22" width="4" height="4" fill="#111"/><rect x="28" y="26" width="4" height="4" fill="#111"/>
+            <rect x="36" y="22" width="4" height="4" fill="#111"/><rect x="44" y="24" width="4" height="4" fill="#111"/>
+            <rect x="52" y="22" width="4" height="4" fill="#111"/>
+            <rect x="4" y="30" width="4" height="4" fill="#111"/><rect x="12" y="32" width="4" height="4" fill="#111"/>
+            <rect x="20" y="30" width="4" height="4" fill="#111"/>
+            <rect x="26" y="34" width="4" height="4" fill="#111"/><rect x="34" y="30" width="4" height="4" fill="#111"/>
+            <rect x="42" y="32" width="4" height="4" fill="#111"/><rect x="50" y="30" width="4" height="4" fill="#111"/>
+            <rect x="58" y="34" width="4" height="4" fill="#111"/>
+            <rect x="2" y="38" width="4" height="4" fill="#111"/><rect x="10" y="40" width="4" height="4" fill="#111"/>
+            <rect x="18" y="38" width="4" height="4" fill="#111"/>
+            <rect x="24" y="42" width="4" height="4" fill="#111"/><rect x="32" y="38" width="4" height="4" fill="#111"/>
+            <rect x="40" y="40" width="4" height="4" fill="#111"/><rect x="48" y="38" width="4" height="4" fill="#111"/>
+            <rect x="56" y="42" width="4" height="4" fill="#111"/>
+            <rect x="22" y="46" width="4" height="4" fill="#111"/><rect x="30" y="50" width="4" height="4" fill="#111"/>
+            <rect x="38" y="48" width="4" height="4" fill="#111"/>
+            <rect x="44" y="52" width="4" height="4" fill="#111"/><rect x="52" y="48" width="4" height="4" fill="#111"/>
+            <rect x="58" y="54" width="4" height="4" fill="#111"/>
+            <rect x="22" y="56" width="4" height="4" fill="#111"/><rect x="28" y="58" width="4" height="4" fill="#111"/>
+            <rect x="36" y="58" width="4" height="4" fill="#111"/>
+            <!-- Privy center logo (white square + red P) -->
+            <rect x="24" y="24" width="16" height="16" fill="white"/>
+            <rect x="25" y="25" width="14" height="14" fill="#E42E2C" rx="2"/>
+            <text x="32" y="35" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Arial">P</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="docviewer-bottom">
+      <div class="dv-page-pill">
+        <span class="dv-page-pill-inner">Page 1 of 1</span>
+      </div>
+      <div class="dv-action-row">
+        <button class="dv-icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button class="docviewer-sign-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Add signature (1)
+        </button>
+        <button class="dv-icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="home-indicator"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       NEW BOTTOM SHEETS
+  ══════════════════════════════════════ -->
+
+  <!-- SHEET: DOC ACCESS (Kondisi C) -->
+  <div class="bottom-sheet" id="sheet-doc-access">
+    <div class="bottom-sheet-handle"></div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Tutup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="bottom-sheet-body">
+      <div class="dam-icon-wrap-sheet">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 7V5C16 3.9 15.1 3 14 3H10C8.9 3 8 3.9 8 5V7" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 12V16" stroke="#F97316" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="11" r="1" fill="#F97316"/>
+        </svg>
+      </div>
+      <div class="dam-title-sheet">Akses Dokumen Terbatas</div>
+      <div class="dam-body-sheet">Anda perlu menerima undangan untuk mengakses dokumen ini. Bergabunglah dengan enterprise terlebih dahulu.</div>
+      <div class="ent-chip-box-sheet">
+        <div class="ent-chip-box-icon-s">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="ent-chip-box-name-s">Bambang Pamungkas (BP1243)</div>
+          <div class="ent-chip-box-sub-s">Enterprise Account</div>
+        </div>
+      </div>
+      <div class="note-box-sheet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Jika Anda menolak undangan ini, semua dokumen yang dikirim dari enterprise akan otomatis ditolak untuk Anda.</span>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <div class="btn-row-sheet">
+        <button class="btn-sheet danger-outline" onclick="showDeclineFromDocAccess()">Tolak</button>
+        <button class="btn-sheet primary" onclick="showInvitationFromDocAccess()">Terima Undangan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET: DECLINE PICKER -->
+  <div class="bottom-sheet" id="sheet-decline-picker">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="warning-title" style="font-size:19px; margin-bottom:6px;">Tolak undangan</div>
+      <div class="invite-desc" style="margin-bottom:20px;">Pilih simulasi skenario penolakan:</div>
+      <div class="picker-option" onclick="showDeclineWithDocs()">
+        <div class="picker-option-icon warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <div class="picker-option-body">
+          <div class="picker-option-label">Ada dokumen tertunda</div>
+          <div class="picker-option-sub">User memiliki dokumen dari enterprise yang akan terdampak</div>
+        </div>
+        <div class="picker-option-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="picker-option" onclick="showDeclineNoDocs()">
+        <div class="picker-option-icon neutral">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+        </div>
+        <div class="picker-option-body">
+          <div class="picker-option-label">Tidak ada dokumen</div>
+          <div class="picker-option-sub">User belum memiliki dokumen dari enterprise ini</div>
+        </div>
+        <div class="picker-option-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <button class="btn-sheet full" onclick="cancelDeclinePicker()">Batal</button>
+    </div>
+  </div>
+
+  <!-- SHEET: DECLINE NO-DOC CONFIRM -->
+  <div class="bottom-sheet" id="sheet-decline-nodoc">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="warning-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="warning-title">Yakin ingin menolak?</div>
+      <div class="invite-desc">Jika Anda menolak undangan ini, akses ke fitur enterprise akan dihapus dan akun Anda kembali ke <strong style="color:var(--text)">Personal</strong>. Tindakan ini tidak dapat dipulihkan.</div>
+      <div class="nodoc-impact-box">
+        <div class="nodoc-impact-title">Yang akan terjadi setelah menolak:</div>
+        <div class="nodoc-impact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Fitur enterprise (BulkSign, Seal, Stamp) dinonaktifkan
+        </div>
+        <div class="nodoc-impact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Sertifikat elektronik terafiliasi tidak diterbitkan
+        </div>
+        <div class="nodoc-impact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Akun kembali ke paket Personal
+        </div>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <div class="btn-row-sheet">
+        <button class="btn-sheet" onclick="backToDeclinePicker()">Kembali</button>
+        <button class="btn-sheet danger-outline" onclick="showDeclineNoDocSuccess()">Tolak undangan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET: DECLINE NO-DOC SUCCESS -->
+  <div class="bottom-sheet" id="sheet-decline-nodoc-success">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-body">
+      <div class="neutral-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <div class="warning-title">Undangan ditolak</div>
+      <div class="invite-desc">Oke, tidak masalah. Undangan dari <strong style="color:var(--text)">PT. Privy Identitas Digital</strong> telah Anda tolak. Akun Anda tetap pada paket Personal. Hubungi admin enterprise jika Anda berubah pikiran.</div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <button class="btn-sheet full" onclick="goToPersonalActions()">Kembali ke dashboard</button>
+    </div>
+  </div>
+
+</div><!-- /phone-frame -->
+
+<div class="proto-badge">Mobile Prototype</div>
+
+<div class="cond-switcher">
+  <button class="cs-pill active" id="pill-A" onclick="setCondition('A')">A — Forced Modal</button>
+  <button class="cs-pill" id="pill-B" onclick="setCondition('B')">B — Email Deep Link</button>
+  <button class="cs-pill" id="pill-C" onclick="setCondition('C')">C — Pending Doc</button>
+  <button class="cs-pill" id="pill-D" onclick="setCondition('D')">D — Push Notif</button>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const hideEl = id => { const el = $(id); if(el) el.style.display = 'none'; };
+  const showEl = (id, display='flex') => { const el = $(id); if(el) el.style.display = display; };
+
+  // ── State ─────────────────────────────
+  let currentCondition = 'A';
+  let invitationPending = true;
+  let declineSource = 'invitation'; // 'invitation' | 'notification' | 'doc-access'
+
+  // ── Condition Switcher ─────────────────────────────
+  const ALL_SCREENS = ['screen-lock','screen-login','screen-home','screen-actions','screen-notifications','screen-email','screen-docviewer'];
+  const ALL_SHEETS  = ['sheet-invitation','sheet-tnc','sheet-success','sheet-decline','sheet-decline-success',
+                       'sheet-decline-picker','sheet-decline-nodoc','sheet-decline-nodoc-success','sheet-doc-access'];
+
+  function setCondition(c) {
+    currentCondition = c;
+    ['A','B','C','D'].forEach(x => { const p = $('pill-'+x); if(p) p.classList.remove('active'); });
+    $('pill-'+c).classList.add('active');
+    invitationPending = true;
+    declineSource = 'invitation';
+    if ($('invite-upload-note')) $('invite-upload-note').style.display = 'none';
+
+    ALL_SCREENS.forEach(hideEl);
+    closeAllSheets();
+    hideEl('deeplink-overlay');
+
+    switchToPersonal();
+    if (c === 'A') {
+      showEl('screen-home', 'flex');
+      setTimeout(() => showInvitation(), 400);
+    } else if (c === 'B') {
+      showEl('screen-email', 'flex');
+    } else if (c === 'C') {
+      // Home screen sama seperti kondisi A (Personal plan).
+      // Enterprise pending doc muncul di actions list via renderPersonalActions().
+      showEl('screen-home', 'flex');
+    } else if (c === 'D') {
+      showEl('screen-lock', 'flex');
+    }
+  }
+
+  // ── Screen switching ─────────────────────────────
+  function openFromNotif() {
+    hideEl('screen-lock');
+    showEl('screen-login');
+  }
+
+  function doLogin() {
+    hideEl('screen-login');
+    showEl('screen-home', 'flex');
+    if (currentCondition === 'A' || currentCondition === 'D') {
+      setTimeout(() => showInvitation(), 400);
+    }
+  }
+
+  function resetToLock() {
+    setCondition('A');
+    ALL_SCREENS.forEach(hideEl);
+    closeAllSheets();
+    showEl('screen-lock', 'flex');
+  }
+
+  function goToHome() {
+    ALL_SCREENS.forEach(hideEl);
+    closeAllSheets();
+    showEl('screen-home', 'flex');
+  }
+
+  function goToNotifications() {
+    ALL_SCREENS.forEach(hideEl);
+    closeAllSheets();
+    showEl('screen-notifications', 'flex');
+  }
+
+  function goToDocList() {
+    ALL_SCREENS.forEach(hideEl);
+    closeAllSheets();
+    showEl('screen-actions', 'flex');
+  }
+
+  // ── Kondisi B: Deeplink ─────────────────────────────
+  function startDeeplink() {
+    hideEl('screen-email');
+    showEl('deeplink-overlay', 'flex');
+    setTimeout(() => { $('deeplink-bar').classList.add('go'); }, 50);
+    setTimeout(() => {
+      hideEl('deeplink-overlay');
+      showEl('screen-home', 'flex');
+      setTimeout(() => showInvitation(), 300);
+    }, 1800);
+  }
+
+  // ── Kondisi C: Doc access / viewer ─────────────────────────────
+  function openDocFromList() {
+    if (currentCondition === 'C' && invitationPending) {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-doc-access', 'flex');
+    } else {
+      ALL_SCREENS.forEach(hideEl);
+      showEl('screen-docviewer', 'flex');
+    }
+  }
+
+  function backFromDocViewer() {
+    ALL_SCREENS.forEach(hideEl);
+    showEl('screen-actions', 'flex');
+  }
+
+  // ── Doc-access: Terima Undangan → TNC directly ─────────────────────────────
+  function showInvitationFromDocAccess() {
+    declineSource = 'doc-access';
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showTnc();
+  }
+
+  // ── Upload gate ─────────────────────────────
+  function handleUploadClick() {
+    if (invitationPending && (currentCondition === 'B' || currentCondition === 'C')) {
+      closeAllSheets();
+      if ($('invite-upload-note')) $('invite-upload-note').style.display = 'block';
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-invitation', 'flex');
+    }
+  }
+
+  // ── Sheets ─────────────────────────────
+  function closeAllSheets() {
+    ALL_SHEETS.forEach(hideEl);
+    const bd = $('sheet-backdrop');
+    if (bd) bd.classList.remove('show');
+    if ($('invite-upload-note')) $('invite-upload-note').style.display = 'none';
+  }
+
+  function showInvitation() {
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-invitation', 'flex');
+  }
+
+  function dismissInvitation() {
+    // Check if invitation was triggered by the upload gate (note is visible)
+    const fromUpload = $('invite-upload-note') && $('invite-upload-note').style.display === 'block';
+    closeAllSheets();
+    ALL_SCREENS.forEach(hideEl);
+    if (fromUpload) {
+      showEl('screen-actions', 'flex');
+    } else {
+      showEl('screen-home', 'flex');
+    }
+  }
+
+  function showTnc() {
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-tnc', 'flex');
+    $('tnc-checkbox').classList.remove('checked');
+    $('btn-tnc-continue').disabled = true;
+    $('tnc-scroll-hint').style.opacity = '1';
+    setTimeout(() => { $('tnc-text').scrollTop = 0; }, 50);
+  }
+
+  function showAcceptSuccess() {
+    invitationPending = false;
+    closeAllSheets();
+    if (declineSource === 'doc-access') {
+      // Redirect straight to doc viewer
+      switchToEnterprise();
+      ALL_SCREENS.forEach(hideEl);
+      showEl('screen-docviewer', 'flex');
+    } else {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-success', 'flex');
+    }
+  }
+
+  // ── Notification handlers ─────────────────────────────
+  function acceptFromNotif() {
+    // Accept from notification → TNC directly (no redirect to home first)
+    $('sheet-backdrop').classList.add('show');
+    declineSource = 'notification';
+    showTnc();
+  }
+
+  function showDeclineConfirmFromNotif() {
+    declineSource = 'notification';
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-picker', 'flex');
+  }
+
+  // ── Decline flow ─────────────────────────────
+  // Decline: always show picker first
+  function showDeclineConfirm() {
+    declineSource = 'invitation';
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-picker', 'flex');
+  }
+
+  function showDeclineFromDocAccess() {
+    declineSource = 'doc-access';
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-picker', 'flex');
+  }
+
+  function showDeclineWithDocs() {
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline', 'flex');
+  }
+
+  function showDeclineNoDocs() {
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-nodoc', 'flex');
+  }
+
+  function cancelDeclinePicker() {
+    closeAllSheets();
+    if (declineSource === 'notification') {
+      // Return to notifications screen, no sheet needed
+      ALL_SCREENS.forEach(hideEl);
+      showEl('screen-notifications', 'flex');
+    } else if (declineSource === 'doc-access') {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-doc-access', 'flex');
+    } else {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-invitation', 'flex');
+    }
+  }
+
+  function showDeclineSuccess() {
+    invitationPending = false;
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-success', 'flex');
+  }
+
+  function showDeclineNoDocSuccess() {
+    invitationPending = false;
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-nodoc-success', 'flex');
+  }
+
+  function reopenInvitation() {
+    closeAllSheets();
+    if (declineSource === 'notification') {
+      // Return to notifications, no invitation sheet
+      ALL_SCREENS.forEach(hideEl);
+      showEl('screen-notifications', 'flex');
+    } else if (declineSource === 'doc-access') {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-doc-access', 'flex');
+    } else {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-invitation', 'flex');
+    }
+  }
+
+  function backToDeclinePicker() {
+    closeAllSheets();
+    $('sheet-backdrop').classList.add('show');
+    showEl('sheet-decline-picker', 'flex');
+  }
+
+  function cancelTnc() {
+    // Reset TNC checkbox state
+    const cb = $('tnc-checkbox');
+    if (cb) cb.classList.remove('checked');
+    const btn = $('btn-tnc-continue');
+    if (btn) btn.disabled = true;
+    closeAllSheets();
+    if (declineSource === 'notification') {
+      ALL_SCREENS.forEach(hideEl);
+      showEl('screen-notifications', 'flex');
+    } else if (declineSource === 'doc-access') {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-doc-access', 'flex');
+    } else {
+      $('sheet-backdrop').classList.add('show');
+      showEl('sheet-invitation', 'flex');
+    }
+  }
+
+  // ── TNC checkbox ─────────────────────────────
+  function toggleTncCheck() {
+    const cb = $('tnc-checkbox');
+    cb.classList.toggle('checked');
+    $('btn-tnc-continue').disabled = !cb.classList.contains('checked');
+  }
+
+  function onTncScroll() {
+    const el = $('tnc-text');
+    const hint = $('tnc-scroll-hint');
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 12;
+    hint.style.opacity = atBottom ? '0' : '1';
+  }
+
+  // ── Account state ─────────────────────────────
+  function switchToEnterprise() {
+    const planCard = $('home-plan-card');
+    planCard.classList.add('enterprise');
+    $('home-plan-label').textContent = 'Enterprise Plan';
+    $('home-plan-id').textContent = 'PT. Privy Identitas Digital';
+    $('home-plan-expiry').textContent = 'Expired: Feb 01, 2029';
+    $('drawer-plan-label').textContent = 'Enterprise plan';
+    $('drawer-plan-sub').textContent = 'Until Feb 01, 2029';
+    $('drawer-account-name').textContent = 'PT. Privy Identitas Digital';
+    const drawerAv = $('drawer-account-av');
+    drawerAv.classList.add('enterprise');
+    drawerAv.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 5v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V5l-8-3z"/></svg>';
+    const topbarAv = $('actions-topbar-av');
+    topbarAv.classList.add('enterprise');
+    topbarAv.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 5v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V5l-8-3z"/></svg>';
+    renderEnterpriseActions();
+  }
+
+  function switchToPersonal() {
+    const planCard = $('home-plan-card');
+    planCard.classList.remove('enterprise');
+    $('home-plan-label').textContent = 'Personal Plan';
+    $('home-plan-id').textContent = 'WM0905';
+    $('home-plan-expiry').textContent = 'Expired: May 07, 2026';
+    $('drawer-plan-label').textContent = 'Personal plan';
+    $('drawer-plan-sub').textContent = 'Until May 07, 2026';
+    $('drawer-account-name').textContent = 'DIMAS APRILIAN SULAIMAN PUT...';
+    const drawerAv = $('drawer-account-av');
+    drawerAv.classList.remove('enterprise');
+    drawerAv.innerHTML = 'D';
+    const topbarAv = $('actions-topbar-av');
+    topbarAv.classList.remove('enterprise');
+    topbarAv.innerHTML = 'D';
+    renderPersonalActions();
+  }
+
+  // ── Flow endings ─────────────────────────────
+  function goToEnterpriseActions() {
+    closeAllSheets();
+    ALL_SCREENS.forEach(hideEl);
+    switchToEnterprise();
+    showEl('screen-actions', 'flex');
+  }
+
+  function goToPersonalActions() {
+    closeAllSheets();
+    ALL_SCREENS.forEach(hideEl);
+    switchToPersonal();
+    showEl('screen-actions', 'flex');
+  }
+
+  function goToActions() {
+    ALL_SCREENS.forEach(hideEl);
+    closeAllSheets();
+    showEl('screen-actions', 'flex');
+  }
+
+  // ── Drawer ─────────────────────────────
+  function toggleDrawer() {
+    const d = $('drawer');
+    const b = $('drawer-backdrop');
+    d.classList.toggle('show');
+    b.classList.toggle('show');
+  }
+
+  // ── Render docs ─────────────────────────────
+  function renderPersonalActions() {
+    const condCFirstItem = currentCondition === 'C' ? `
+      <div class="actions-section-header">Today</div>
+      <div class="action-item" onclick="openDocFromList()" style="cursor:pointer;">
+        <div class="action-item-av" style="background: linear-gradient(135deg, #3b5c7c, #1e3a5f);"></div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Rastra Sewakottama Putra Per...</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Apr 26, 2026</div>
+          </div>
+          <div class="action-item-title">test seal dari enterprise lain</div>
+          <div class="action-item-tags">
+            <span class="action-tag">Uncategorized</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>` : '';
+    $('actions-list').innerHTML = condCFirstItem + `
+      <div class="actions-section-header">This year</div>
+      <div class="action-item">
+        <div class="action-item-av">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Tika</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Feb 06, 2026</div>
+          </div>
+          <div class="action-item-title">M_01-DOC002_Ebupot_2126_BPA1_2508SEOUB</div>
+        </div>
+      </div>
+      <div class="actions-section-header">More than 1 year</div>
+      <div class="action-item">
+        <div class="action-item-av" style="background: linear-gradient(135deg, #1E3A8A, #1E40AF);"></div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Itest</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Jul 22, 2025</div>
+          </div>
+          <div class="action-item-title">testing upload</div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-item-av" style="background: linear-gradient(135deg, #1E3A8A, #1E40AF);"></div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Itest</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Jul 22, 2025</div>
+          </div>
+          <div class="action-item-title">testing upload</div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-item-av" style="background: linear-gradient(135deg, #1E3A8A, #1E40AF);"></div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">FAHMI MUHAMMAD ROMADHON</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Jul 22, 2025</div>
+          </div>
+          <div class="action-item-title">test upload</div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-item-av">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Anandhi Tristiaratri</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Mar 13, 2025</div>
+          </div>
+          <div class="action-item-title">check tipis tipis</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderEnterpriseActions() {
+    const condCPendingDoc = currentCondition === 'C' && invitationPending ? `
+      <div class="actions-section-header">Today</div>
+      <div class="action-item" onclick="openDocFromList()" style="cursor:pointer;">
+        <div class="action-item-av" style="background: linear-gradient(135deg, #3b5c7c, #1e3a5f);"></div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Rastra Sewakottama Putra Per...</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Apr 26, 2026</div>
+          </div>
+          <div class="action-item-title">test seal dari enterprise lain</div>
+          <div class="action-item-tags">
+            <span class="action-tag">Uncategorized</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>` : `
+      <div class="actions-section-header">Today</div>`;
+
+    $('actions-list').innerHTML = condCPendingDoc + `
+      <div class="action-item">
+        <div class="action-item-av" style="background: linear-gradient(135deg, #3b5c7c, #1e3a5f);"></div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">Rastra Sewakottama Putra Per...</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Apr 20, 2026</div>
+          </div>
+          <div class="action-item-title">Surat Pengangkatan CSIRT - Dimas Aprilian Sulaiman...</div>
+          <div class="action-item-tags">
+            <span class="action-tag">Uncategorized</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-item-av">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">INDRIA ANGGRAINI</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Apr 20, 2026</div>
+          </div>
+          <div class="action-item-title">Struktur & Tanggung Jawab Personel CSIRT -2026</div>
+          <div class="action-item-tags">
+            <span class="action-tag approval">Approval</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-item-av">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">INDRIA ANGGRAINI</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Apr 20, 2026</div>
+          </div>
+          <div class="action-item-title">List Personel CSIRT - 2026</div>
+          <div class="action-item-tags">
+            <span class="action-tag">Uncategorized</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>
+      <div class="actions-section-header">This month</div>
+      <div class="action-item">
+        <div class="action-item-av">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">SAFIRA RAYINDRA PUTRI</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Apr 14, 2026</div>
+          </div>
+          <div class="action-item-title">Presensi Sosialisasi CSIRT - 14042026</div>
+          <div class="action-item-tags">
+            <span class="action-tag form">Form Training</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>
+      <div class="actions-section-header">This year</div>
+      <div class="action-item">
+        <div class="action-item-av" style="background: #E8EDF4;">
+          <svg viewBox="0 0 24 24" fill="#5B6778" style="width:28px;height:28px;margin:9px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="action-item-info">
+          <div class="action-item-head">
+            <div class="action-item-author">
+              <span class="action-item-author-name">FRANS</span>
+              <span class="action-item-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg></span>
+            </div>
+            <div class="action-item-date">Feb 19, 2026</div>
+          </div>
+          <div class="action-item-title">Document UAT - PrivyPal AI Response (18 Febr...</div>
+          <div class="action-item-tags">
+            <span class="action-tag">Uncategorized</span>
+            <span class="action-tag">PT. Privy Identitas Digital</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Init — start at Kondisi A
+  setCondition('A');
+</script>
+</body>
+</html>
